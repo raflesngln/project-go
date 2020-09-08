@@ -10,5 +10,5 @@
 ***
 __For build__ :
 ```
-> run go build main.go__
+> run go build main.go
 ```
