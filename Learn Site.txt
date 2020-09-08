@@ -1,2 +1,0 @@
-https://medium.com/easyread/mencoba-go-module-pada-golang-13ae343ce529
-

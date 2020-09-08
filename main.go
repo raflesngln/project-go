@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	//"path/filepath"
 	"strconv"
 	_ "strconv"
 	"strings"
@@ -131,7 +133,9 @@ func decodeUSER(data []byte) []Users {
 
 func main() {
 	router := gin.Default()
+	router.Static("/assets", "./assets") //memanggil file assets agar bisa dipangggil oleh funsi lain
 	router.Use(MyMiddleware())
+
 	router.GET("/", func(c *gin.Context) {
 		c.String(http.StatusOK, "Selamat datang Selamat belajar GO")
 	})
@@ -141,7 +145,10 @@ func main() {
 	router.POST("/logout", Logout)
 	router.POST("/token/refresh", Refresh)
 
-	router.Static("/assets", "./assets") //memanggil file assets agar bisa dipangggil oleh funsi lain
+	router.GET("/form_upload", Form_upload)
+	router.POST("/upload_file", UploadFile)
+
+
 	router.GET("/product/", ProductPage) // http://localhost:8000/product
 
 	router.GET("/user/:name/", UserDetail) // http://localhost:8000/user/rafles/?address=jakarta%20barat
@@ -169,6 +176,7 @@ func main() {
 		web.GET("/decode_json", decodeJSON)
 	}
 
+	router.StaticFS("/file", http.Dir("public"))
 	router.Run(":8000")
 }
 
@@ -638,4 +646,30 @@ func DeleteTokens(authD *AccessDetails) error {
 		return errors.New("something went wrong")
 	}
 	return nil
+}
+
+func UploadFile(c *gin.Context) {
+	file, header, err := c.Request.FormFile("file")
+	if err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("file err : %s", err.Error()))
+		return
+	}
+	filename := header.Filename
+	out, err := os.Create("public/" + filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer out.Close()
+	_, err = io.Copy(out, file)
+	if err != nil {
+		log.Fatal(err)
+	}
+	filepath := "http://localhost:8000/public/" + filename
+	c.JSON(http.StatusOK, gin.H{"filepath": filepath})
+}
+
+func Form_upload(c *gin.Context) {
+	c.HTML(http.StatusOK, "upload_file.html", gin.H{
+		"judul": "Profile Paging",
+	})
 }
